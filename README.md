@@ -42,7 +42,7 @@ credit_scoring_tool/
 - Python 3.10 or newer (standard library only, nothing to install)
 - PyCharm
 
-## How to run (Charles Wilson lab computers)
+## How to run
 
 1. Unzip the submission and open PyCharm → **Open** → select the
    `credit_scoring_tool` folder.
@@ -68,12 +68,4 @@ python -m unittest discover -s <student_id> -t . -v
 Commands for each testing technique and for coverage will be added as the
 tests are written.
 
-## Team workflow
 
-- Never commit directly to `main` after the initial skeleton.
-- Create each branch from its GitHub issue (Development → Create a branch).
-- Commit messages start with the user story ID, e.g.
-  `US-M2-01: add income validation`.
-- Merge through a pull request reviewed by a teammate.
-- Never delete a branch after merging (the brief requires it as evidence).
-- Code follows the PEP 8 style guide.
