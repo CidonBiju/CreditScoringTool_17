@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
+venv/
+
+# PyCharm workspace files
+.idea/
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# OS files
+.DS_Store
+Thumbs.db
