@@ -27,3 +27,22 @@ class TestWeightingProfiles(unittest.TestCase):
         self.metrics["payment_history"]["consistency_score"] = None
         with self.assertRaisesRegex(ValueError, "Insufficient payment history"):
             apply_weighting_profile(self.metrics, "Conservative")
+
+    def test_unknown_profile_is_rejected(self):
+        # Invalid profile partition: otherwise valid metrics isolate this input.
+        with self.assertRaisesRegex(ValueError, r"^Unknown weighting profile: Unknown$"):
+            apply_weighting_profile(self.metrics, "Unknown")
+
+    def test_each_profile_returns_its_signed_score_breakdown(self):
+        # For the same applicant, check each profile against hand-calculated points.
+        expected_breakdowns = {
+            "Conservative": {"payment_history": 88.0, "dti": -19.25, "utilisation": -13.75},
+            "High Risk": {"payment_history": 132.0, "dti": -13.75, "utilisation": -8.25},
+        }
+        for profile, expected in expected_breakdowns.items():
+            with self.subTest(profile=profile):
+                result = apply_weighting_profile(self.metrics, profile)
+                self.assertEqual(result["profile"], profile)
+                self.assertEqual(result["score_breakdown"].keys(), expected.keys())
+                for factor, points in expected.items():
+                    self.assertAlmostEqual(result["score_breakdown"][factor], points)
