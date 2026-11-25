@@ -1,0 +1,187 @@
+US-M4-01 Credit Risk Classification
+GitHub issue: https://github.com/CidonBiju/CreditScoringTool_17/issues/2
+Verification run on Python 3.12, 25 November 2026
+
+The classifier consumes a final score and the agreed DTI, overall utilisation
+and severe-event fields. It returns Prime, Near Prime, Subprime or High Risk.
+Tests use synthetic profiles. End-to-end verification through the metrics
+builder, score producer and menu remains outstanding on this branch.
+
+Numbered control-flow graph
+For predicates the first edge is true and the second false. For reads the
+first edge is success and the second is a handled KeyError or TypeError.
+Returns and validation failures terminate at the common exit.
+ 1. Entry                                -> 2
+ 2. Integer score                        -> 3, 4
+ 3. Score in 300-850                     -> 5, 4
+ 4. Raise invalid score                  -> 42
+ 5. Read DTI                             -> 6, 8
+ 6. Read utilisation                     -> 7, 8
+ 7. Read severe events                   -> 9, 8
+ 8. Raise invalid profile                -> 42
+ 9. Numeric DTI                          -> 10, 12
+10. DTI >= 0                             -> 11, 12
+11. DTI <= 100                           -> 13, 12
+12. Raise invalid DTI                    -> 42
+13. Utilisation known                    -> 14, 18
+14. Numeric utilisation                  -> 15, 17
+15. Utilisation >= 0                     -> 16, 17
+16. Utilisation <= 100                   -> 18, 17
+17. Raise invalid utilisation            -> 42
+18. Integer event count                  -> 19, 20
+19. Event count >= 0                     -> 21, 20
+20. Raise invalid event count            -> 42
+21. Event count >= 1                     -> 24, 22
+22. DTI >= 60                            -> 24, 23
+23. Score < 600                          -> 24, 25
+24. Return High Risk (override)          -> 42
+25. Initialise warning count             -> 26
+26. DTI >= 40                            -> 27, 28
+27. Add DTI warning                      -> 28
+28. Utilisation known                    -> 29, 31
+29. Utilisation >= 75                    -> 30, 31
+30. Add utilisation warning              -> 31
+31. Two warnings                         -> 32, 33
+32. Return High Risk (two warnings)      -> 42
+33. Score < 650                          -> 34, 36
+34. One warning                          -> 35, 36
+35. Return High Risk (borderline)        -> 42
+36. Score < 700                          -> 37, 38
+37. Return Subprime                      -> 42
+38. One warning                          -> 40, 39
+39. Utilisation unknown                  -> 40, 41
+40. Return Near Prime                    -> 42
+41. Return Prime                         -> 42
+42. Common exit                          (terminal)
+
+Cyclomatic complexity = E - N + 2P = 67 - 42 + 2(1) = 27.
+The control-flow cases exercise 27 independent traces. Each trace is
+represented by its traversed branch edges, and the coverage runner verifies
+independence by eliminating shared edges. The model includes short-circuit
+predicates and handled profile reads. It excludes interpreter dispatch for
+exceptions outside the input contract.
+
+Verification commands and captured output
+
+> py -3.12 -B -m pytest -q -p no:cacheprovider
+.............                                    [100%]
+13 passed, 1104 subtests passed in 0.41s
+
+> py -3.12 -B -m 239061722_cidon.test.measure_us_m4_01
+> py -3.12 -B -m unittest discover -v
+blackbox.specification
+test_approved_rules (239061722_cidon.test.blackbox.specification.test_us_m4_01.TestSpecification.test_approved_rules) ... ok
+test_invalid_values (239061722_cidon.test.blackbox.specification.test_us_m4_01.TestSpecification.test_invalid_values) ... ok
+test_missing_or_malformed_profile (239061722_cidon.test.blackbox.specification.test_us_m4_01.TestSpecification.test_missing_or_malformed_profile) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.015s
+
+OK
+Statements: 30/30
+Branches: 50/52
+Missing statement lines: []
+Missing conditional jump edges: [(62, 64), (538, 542)]
+Missing profile read edges: []
+
+blackbox.random_based
+test_generated_profiles_against_decision_table (239061722_cidon.test.blackbox.random_based.test_us_m4_01.TestRandomBased.test_generated_profiles_against_decision_table) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.196s
+
+OK
+Statements: 25/30
+Branches: 39/52
+Missing statement lines: [25, 32, 35, 38, 40]
+Missing conditional jump edges: [(34, 64), (62, 64), (174, 222), (188, 220), (196, 198), (292, 340), (306, 338), (314, 316), (394, 406), (404, 406)]
+Missing profile read edges: [(28, 'error'), (29, 'error'), (30, 'error')]
+
+blackbox.boundary_value
+test_dti_cutoffs (239061722_cidon.test.blackbox.boundary_value.test_us_m4_01.TestBoundaryValues.test_dti_cutoffs) ... ok
+test_outside_score_range (239061722_cidon.test.blackbox.boundary_value.test_us_m4_01.TestBoundaryValues.test_outside_score_range) ... ok
+test_score_cutoffs (239061722_cidon.test.blackbox.boundary_value.test_us_m4_01.TestBoundaryValues.test_score_cutoffs) ... ok
+test_severe_event_cutoff (239061722_cidon.test.blackbox.boundary_value.test_us_m4_01.TestBoundaryValues.test_severe_event_cutoff) ... ok
+test_utilisation_cutoff (239061722_cidon.test.blackbox.boundary_value.test_us_m4_01.TestBoundaryValues.test_utilisation_cutoff) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.019s
+
+OK
+Statements: 26/30
+Branches: 40/52
+Missing statement lines: [32, 35, 38, 52]
+Missing conditional jump edges: [(34, 64), (174, 222), (188, 220), (196, 198), (292, 340), (306, 338), (314, 316), (394, 406), (516, 518)]
+Missing profile read edges: [(28, 'error'), (29, 'error'), (30, 'error')]
+
+whitebox.control_flow
+test_classification_paths (239061722_cidon.test.whitebox.control_flow.test_us_m4_01.TestControlFlow.test_classification_paths) ... ok
+test_validation_paths (239061722_cidon.test.whitebox.control_flow.test_us_m4_01.TestControlFlow.test_validation_paths) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.010s
+
+OK
+Statements: 30/30
+Branches: 52/52
+Missing statement lines: []
+Missing conditional jump edges: []
+Missing profile read edges: []
+Independent observed paths: 27/27
+
+whitebox.symbolic_execution
+test_solutions_to_path_constraints (239061722_cidon.test.whitebox.symbolic_execution.test_us_m4_01.TestSymbolicExecution.test_solutions_to_path_constraints) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.008s
+
+OK
+Statements: 25/30
+Branches: 39/52
+Missing statement lines: [25, 32, 35, 38, 40]
+Missing conditional jump edges: [(34, 64), (62, 64), (174, 222), (188, 220), (196, 198), (292, 340), (306, 338), (314, 316), (394, 406), (404, 406)]
+Missing profile read edges: [(28, 'error'), (29, 'error'), (30, 'error')]
+
+whitebox.concolic
+test_negate_one_condition_from_each_seed_path (239061722_cidon.test.whitebox.concolic.test_us_m4_01.TestConcolic.test_negate_one_condition_from_each_seed_path) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.009s
+
+OK
+Statements: 25/30
+Branches: 37/52
+Missing statement lines: [25, 32, 35, 38, 40]
+Missing conditional jump edges: [(34, 64), (62, 64), (174, 222), (188, 220), (196, 198), (292, 340), (306, 338), (314, 316), (394, 406), (404, 406), (456, 458), (538, 542)]
+Missing profile read edges: [(28, 'error'), (29, 'error'), (30, 'error')]
+Observed paths in test case order:
+1: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 next, J13 next, J14 jump, J15 jump, J16 next, J17 jump, J18 jump, J19 jump, J21 next
+2: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 next, J13 next, J14 jump, J15 jump, J16 next, J17 jump, J18 jump, J19 jump, J21 jump, J22 next, J23 jump
+3: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 next, J13 next, J14 jump, J15 next, J16 next, J17 jump, J18 jump, J19 next, J20 next
+4: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 next, J13 next, J14 jump, J15 next, J16 next, J17 jump, J18 jump, J19 jump, J21 next
+5: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 next, J13 next, J14 jump, J15 next, J16 next, J17 jump, J18 jump, J19 jump, J21 jump, J22 jump
+6: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 next, J13 next, J14 jump, J15 next, J16 next, J17 next, J18 next
+7: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 next, J13 next, J14 jump, J15 next, J16 next, J17 jump, J18 jump, J19 jump, J21 jump, J22 jump
+8: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 next, J13 jump
+9: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 next, J13 next, J14 jump, J15 jump, J16 next, J17 jump, J18 jump, J19 jump, J21 jump, J22 next, J23 jump
+10: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 jump
+11: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 next, J7 next, J8 next, J9 jump, J10 next, J11 jump, J12 next, J13 next, J14 jump, J15 jump, J16 next, J17 jump, J18 jump, J19 jump, J21 jump, J22 next, J23 jump
+12: J1 next, J2 jump, line 28 success, line 29 success, line 30 success, J3 next, J4 next, J5 jump, J6 jump, J10 next, J11 jump, J12 next, J13 next, J14 jump, J15 jump, J16 jump, J18 jump, J19 jump, J21 jump, J22 next, J23 next
+test_dti_cutoffs (239061722_cidon.test.blackbox.boundary_value.test_us_m4_01.TestBoundaryValues.test_dti_cutoffs) ... ok
+test_outside_score_range (239061722_cidon.test.blackbox.boundary_value.test_us_m4_01.TestBoundaryValues.test_outside_score_range) ... ok
+test_score_cutoffs (239061722_cidon.test.blackbox.boundary_value.test_us_m4_01.TestBoundaryValues.test_score_cutoffs) ... ok
+test_severe_event_cutoff (239061722_cidon.test.blackbox.boundary_value.test_us_m4_01.TestBoundaryValues.test_severe_event_cutoff) ... ok
+test_utilisation_cutoff (239061722_cidon.test.blackbox.boundary_value.test_us_m4_01.TestBoundaryValues.test_utilisation_cutoff) ... ok
+test_generated_profiles_against_decision_table (239061722_cidon.test.blackbox.random_based.test_us_m4_01.TestRandomBased.test_generated_profiles_against_decision_table) ... ok
+test_approved_rules (239061722_cidon.test.blackbox.specification.test_us_m4_01.TestSpecification.test_approved_rules) ... ok
+test_invalid_values (239061722_cidon.test.blackbox.specification.test_us_m4_01.TestSpecification.test_invalid_values) ... ok
+test_missing_or_malformed_profile (239061722_cidon.test.blackbox.specification.test_us_m4_01.TestSpecification.test_missing_or_malformed_profile) ... ok
+test_negate_one_condition_from_each_seed_path (239061722_cidon.test.whitebox.concolic.test_us_m4_01.TestConcolic.test_negate_one_condition_from_each_seed_path) ... ok
+test_classification_paths (239061722_cidon.test.whitebox.control_flow.test_us_m4_01.TestControlFlow.test_classification_paths) ... ok
+test_validation_paths (239061722_cidon.test.whitebox.control_flow.test_us_m4_01.TestControlFlow.test_validation_paths) ... ok
+test_solutions_to_path_constraints (239061722_cidon.test.whitebox.symbolic_execution.test_us_m4_01.TestSymbolicExecution.test_solutions_to_path_constraints) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.027s
+
+OK
