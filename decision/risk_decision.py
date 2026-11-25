@@ -12,13 +12,51 @@ def classify_risk_category(credit_score: int,
 
     Args:
         credit_score: Final credit score (300 to 850).
-        metrics_profile: The profile from build_metrics_profile().
+        metrics_profile: The profile from build_metrics_profile(), containing
+            dti, overall_utilisation.utilisation and payment_history.severe_events.
 
     Returns:
-        The risk category, e.g. "Prime", "Near Prime", "Subprime" or
-        "High Risk".
+        "Prime", "Near Prime", "Subprime" or "High Risk".
+
+    Raises:
+        ValueError: If the score or a required metric is missing or invalid.
     """
-    raise NotImplementedError
+    if type(credit_score) is not int or credit_score not in range(300, 851):
+        raise ValueError("Credit score must be an integer from 300 to 850.")
+
+    try:
+        dti = metrics_profile["dti"]
+        utilisation = metrics_profile["overall_utilisation"]["utilisation"]
+        severe_events = metrics_profile["payment_history"]["severe_events"]
+    except (KeyError, TypeError) as error:
+        raise ValueError("The metrics profile is missing a required value.") from error
+
+    if type(dti) not in (int, float) or not 0 <= dti <= 100:
+        raise ValueError("DTI must be a percentage from 0 to 100.")
+    if utilisation is not None:
+        if type(utilisation) not in (int, float) or not 0 <= utilisation <= 100:
+            raise ValueError("Utilisation must be a percentage from 0 to 100 or None.")
+    if type(severe_events) is not int or severe_events < 0:
+        raise ValueError("Severe payment events must be a non-negative integer.")
+
+    if severe_events >= 1 or dti >= 60 or credit_score < 600:
+        return "High Risk"
+
+    warnings = 0
+    if dti >= 40:
+        warnings += 1
+    if utilisation is not None and utilisation >= 75:
+        warnings += 1
+
+    if warnings == 2:
+        return "High Risk"
+    if credit_score < 650 and warnings == 1:
+        return "High Risk"
+    if credit_score < 700:
+        return "Subprime"
+    if warnings == 1 or utilisation is None:
+        return "Near Prime"
+    return "Prime"
 
 
 def validate_application(credit_score: int, loan_request: dict) -> list:
