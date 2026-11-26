@@ -29,3 +29,16 @@ done
 ```
 
 In each JSON report, read `files → scoring/credit_scoring.py → functions → apply_weighting_profile → summary`. The full gu12 run passed all 12 test methods.
+
+## Commit references after the author update
+
+Each pair has the same Git tree. The original hashes above identify the revisions used for the coverage measurements.
+
+| Original commit | Rewritten commit |
+| --- | --- |
+| `150441dc0dfc` | `c0b732563106` |
+| `a8387c073eaf` | `7fab3ef59c2e` |
+| `ee245e4c261b` | `65fd5af3a0f2` |
+| `e44bde483275` | `2b4946d9f424` |
+| `db447c1bc64f` | `2f77c484064e` |
+| `c9d2983a24a3` | `bf573efd94d3` |
