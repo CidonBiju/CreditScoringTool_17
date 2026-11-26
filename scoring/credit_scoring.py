@@ -63,7 +63,44 @@ def apply_weighting_profile(metrics_profile: dict,
     Returns:
         {"score": int, "score_breakdown": dict, "profile": str}
     """
-    raise NotImplementedError
+    weights_by_profile = {
+        "Conservative": {"payment_history": 0.40, "dti": 0.35, "utilisation": 0.25},
+        "High Risk": {"payment_history": 0.60, "dti": 0.25, "utilisation": 0.15},
+    }
+    if profile_name not in weights_by_profile:
+        raise ValueError(f"Unknown weighting profile: {profile_name}")
+
+    payment_score = metrics_profile["payment_history"]["consistency_score"]
+    if payment_score is None:
+        raise ValueError("Insufficient payment history")
+
+    dti = metrics_profile["dti"]
+    utilisation = metrics_profile["overall_utilisation"]["utilisation"]
+    raw_metrics = {
+        "payment_history": payment_score,
+        "dti": dti,
+        "utilisation": utilisation,
+    }
+    for name, value in raw_metrics.items():
+        if type(value) not in (int, float) or not 0 <= value <= 100:
+            raise ValueError(f"{name} must be a number between 0 and 100")
+
+    factor_scores = {
+        "payment_history": payment_score,
+        "dti": 100 - dti,
+        "utilisation": 100 - utilisation,
+    }
+    weights = weights_by_profile[profile_name]
+
+    breakdown = {
+        name: (value - 50) * weights[name] * 5.5
+        for name, value in factor_scores.items()
+    }
+    return {
+        "score": round(575 + sum(breakdown.values())),
+        "score_breakdown": breakdown,
+        "profile": profile_name,
+    }
 
 
 def check_score_drop_alert(score_history: list) -> str:
